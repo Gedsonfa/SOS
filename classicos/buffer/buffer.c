@@ -173,14 +173,14 @@ void * producer(void * id)
     // valor a ser produzido
     int produto;
 
-    printf("> Produtor %d esperando por recurso!\n",i);
+    printf("> Produtor %ld esperando por recurso!\n",i);
 
     //
     // TODO: precisa bloquear até que tenha posicao disponível no buffer
     //
 
 
-    printf("> Produtor %d entrou em ação!\n",i);
+    printf("> Produtor %ld entrou em ação!\n",i);
 
     // 
     // TODO: precisa garantir o acesso exclusivo ao buffer
@@ -192,13 +192,13 @@ void * producer(void * id)
     // verificando se o produtor nao esta sobrescrevendo uma posicao
     if (buffer[in] != -1)
     {
-        printf("==== ALERTA DO PRODUTOR %d ====\n", i);
+        printf("==== ALERTA DO PRODUTOR %ld ====\n", i);
         printf("Posicao %d ocupada com o valor %d\n",in,buffer[in]);
         printf("===============================\n");
     }
 
     // gravando no buffer
-    printf("\t> Produtor %d vai gravar o valor %d na pos %d\n", i, produto, in);
+    printf("\t> Produtor %ld vai gravar o valor %d na pos %d\n", i, produto, in);
     buffer[in] = produto;
     
     // avancando a posicao do buffer
