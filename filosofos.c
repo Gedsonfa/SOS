@@ -15,7 +15,7 @@ int *chopstick_use;
 // numero de filosofos
 int N_FILOS;
 
-    // prototipos das funcoes
+// prototipos das funcoes
 void * filosofo(void *);
 void pegar(int, int);
 void liberar(int, int);
