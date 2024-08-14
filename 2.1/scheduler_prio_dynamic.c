@@ -1,87 +1,75 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "queue.h" // contém funções úteis para filas
-#include "proc.h"  // possui as funções dos processos
-#include "stats.h" // possui as funções de estatísticas 
-#include "utils.h" // possui funções úteis 
+#include "queue.h"
+#include "proc.h"
+#include "stats.h"
+#include "utils.h"
 
 // Utilizando as variáveis globais definidas no 'main'
-extern struct queue * ready;    // fila de aptos
-extern struct queue * ready2;   // segunda fila de aptos
+extern struct queue * ready;    // fila de alta prioridade
+extern struct queue * ready2;   // fila de baixa prioridade
 extern struct queue * blocked;  // fila de bloqueados
 extern struct queue * finished; // fila de finalizados
-
-// Variável global que indica o tempo máximo que um processo pode executar ao todo
 extern int MAX_TIME;
 
-struct proc * scheduler(struct proc * current)
-{
-    struct proc * selected = NULL; 
+// Função auxiliar para gerar um número aleatório entre 0 e 99
+static int random_0_99() {
+    return rand() % 100;
+}
+
+struct proc * scheduler(struct proc * current) {
+    struct proc * selected = NULL;
 
     /*
-     *   Tratando o processo que está atualmente executando
+     * Manipulação do processo que está atualmente executando
      */
-    if (current != NULL)
-    {
-        // Verificando o estado em que o processo executando está
-        switch (current->state) 
-        {
+
+    if (current != NULL) {
+        // Verificando o estado do processo que está sendo executado
+        switch (current->state) {
             case READY:
-                // Processo foi preemptado, volta para a segunda fila (ready2)
-                enqueue(ready2, current);
-                count_ready_in(current); // Estatísticas para a fila 2
+                enqueue(ready, current);
+                count_ready_in(current);
                 break;
 
             case BLOCKED:
-                // Processo fez I/O, volta para a primeira fila (ready)
-                enqueue(ready, current);
-                count_blocked_in(current); // Estatísticas para a fila 1
+                enqueue(blocked, current);
+                count_blocked_in(current);
                 break;
 
             case FINISHED:
-                // Processo finalizou
                 enqueue(finished, current);
                 count_finished_in(current);
                 break;
 
             default:
-                printf("@@ ERRO no estado de saída do processo %d\n", current->pid);
+                printf("@@ ERRO: Estado inválido para o processo %d\n", current->pid);
         }
     }
 
     /*
-     *   Estratégia de seleção de um novo processo para executar
+     * Estratégia para selecionar um novo processo para executar
      */
 
-    // Se ambas as filas de aptos estão vazias, não há o que fazer
-    if (isempty(ready) && isempty(ready2))
-    {
+    // Verificar se há processos na fila de alta prioridade
+    if (!isempty(ready) && random_0_99() < 80) {
+        selected = dequeue(ready);
+    } 
+    // Se a fila de alta prioridade estiver vazia ou a aleatoriedade indica, escolha na fila de baixa prioridade
+    else if (!isempty(ready2)) {
+        selected = dequeue(ready2);
+    } 
+    // Se ambas as filas estiverem vazias
+    else {
         return NULL;
     }
 
-    // Implementação da estratégia PRIO DYNAMIC com probabilidade
-    int random_value = rand() % 100;
+    // Atualiza as estatísticas para o processo que saiu da fila de prontos
+    count_ready_out(selected);
 
-    if ((random_value < 80 && !isempty(ready)) || isempty(ready2))
-    {
-        // 80% de chance de selecionar da fila 1, ou se a fila 2 está vazia
-        selected = dequeue(ready);
-        count_ready_out(selected);
-    }
-    else
-    {
-        // 20% de chance de selecionar da fila 2
-        selected = dequeue(ready2);
-        count_ready_out(selected);
-    }
+    // Altera o estado do processo selecionado para em execução
+    selected->state = RUNNING;
 
-    if (selected != NULL)
-    {
-        // Alterando o estado do processo selecionado para executando
-        selected->state = RUNNING;
-    }
-        
-    // Retornando o processo selecionado
+    // Retorna o processo selecionado
     return selected;
 }
